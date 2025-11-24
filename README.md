@@ -9,6 +9,6 @@ The system allows:
 2. Meta-learning based activity prediction
 3. Real-time inference using FastAPI
 4. A beautiful Streamlit dashboard for visualization & testing
-5. 
+   
 Activities include:
 Walking, Upstairs, Downstairs, Sitting, Standing, Laying
