@@ -27,6 +27,30 @@ PAGE_NAMES = [
 
 st.set_page_config(page_title="Edge IoT Meta-Learning Dashboard", layout="wide")
 
+# ---------------- LOGIN SYSTEM -----------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+def login_screen():
+    st.title("🔐 Login")
+    st.write("Please login to access the dashboard.")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login ✅", use_container_width=True):
+        if username == "admin" and password == "1234":
+            st.session_state.logged_in = True
+            st.success("✅ Login successful!")
+            st.rerun()
+        else:
+            st.error("❌ Invalid username or password")
+
+# Show login page if not logged in
+if not st.session_state.logged_in:
+    login_screen()
+    st.stop()
+
 # --------------- Custom CSS for sidebar buttons ---------------
 st.markdown("""
 <style>
@@ -56,6 +80,11 @@ st.markdown("""
 
 # --------------- Sidebar Navigation ----------------
 st.sidebar.title("📚 Navigation")
+
+if st.sidebar.button("🚪 Logout", use_container_width=True):
+    st.session_state.logged_in = False
+    st.rerun()
+
 clicked_page = st.session_state.get("page", "Prediction")
 
 for name in PAGE_NAMES:
@@ -67,14 +96,6 @@ for name in PAGE_NAMES:
     ):
         st.session_state["page"] = name
         clicked_page = name
-
-# Highlight active button
-st.sidebar.markdown(
-    f"<script>"
-    f"var btn = window.parent.document.querySelector('button[kind=\"secondary\"]:contains({clicked_page})');"
-    f"</script>",
-    unsafe_allow_html=True,
-)
 
 page = clicked_page
 
@@ -121,7 +142,6 @@ if page == "Prediction":
     st.title("📡 Real-Time Prediction")
     st.write("Upload a **128×6 JSON window** or paste JSON manually.")
 
-    # Show prediction mapping box
     st.info("""
     ### 📘 Prediction Value Interpretation  
     Model output → Activity label  
@@ -135,13 +155,12 @@ if page == "Prediction":
 
     col1, col2 = st.columns([2, 1])
 
-    # Upload / Paste Input
     with col1:
         uploaded = st.file_uploader("Upload JSON", type=["json"])
         pasted = st.text_area("Or paste JSON manually", height=120)
 
     with col2:
-        if st.button("Use Default Sample Window", type="primary", use_container_width=True):
+        if st.button("Use Default Sample Window", use_container_width=True):
             st.session_state["window"] = default_window()
 
     window = None
@@ -149,29 +168,27 @@ if page == "Prediction":
     if uploaded:
         try:
             window = json.load(uploaded)["window"]
-            st.success("JSON file loaded successfully.")
+            st.success("✅ JSON file loaded successfully.")
         except:
-            st.error("Invalid JSON file.")
+            st.error("❌ Invalid JSON file.")
 
     elif pasted.strip():
         try:
             window = json.loads(pasted)["window"]
-            st.success("Pasted JSON loaded successfully.")
+            st.success("✅ JSON text loaded successfully.")
         except:
-            st.error("Invalid JSON format.")
+            st.error("❌ Invalid JSON format.")
 
     elif "window" in st.session_state:
         window = st.session_state["window"]
 
     if window is None:
-        st.warning("Please upload or paste a JSON window.")
+        st.warning("⚠ Please upload or paste a JSON window.")
         st.stop()
 
-    # Preview
     st.subheader("Preview (first 5 rows)")
     st.write(window[:5])
 
-    # Plots
     with st.expander("📈 Show 6 Sensor Plots"):
         plot_signals(window)
 
@@ -185,12 +202,12 @@ if page == "Prediction":
         if resp is None:
             st.error("❌ Server unreachable.")
         elif resp.status_code != 200:
-            st.error(f"Server Error {resp.status_code}: {resp.text}")
+            st.error(f"❌ Server Error {resp.status_code}: {resp.text}")
         else:
             val = resp.json().get("prediction", None)
             label = map_prediction(val)
 
-            st.success(f"Prediction received in {int((t1-t0)*1000)} ms")
+            st.success(f"✅ Prediction received in {int((t1-t0)*1000)} ms")
 
             colA, colB = st.columns(2)
             colA.metric("Raw Prediction Value", f"{val:.4f}")
@@ -250,7 +267,7 @@ elif page == "Live Simulation":
         time.sleep(1)
 
 # ====================== Model Info =========================
-elif page == "Model Info":
+elif page == "Model Info__":
     st.title("📘 Model Information")
     st.write("""
     - **Type**: Meta-Learning Prototype Network  
